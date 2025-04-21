@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>所属ライバーリスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+        }
+        header {
+            background-color: rgba(0, 0, 0, 0.5);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff69b4;
+            z-index: 1000;
+            transition: top 0.3s; /* スクロール時のスムーズな動きを設定 */
+        }
+        header .menu a {
+            color: #ff69b4;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 14px;
+        }
+        header .menu a:hover {
+            color: #ff0;
+        }
+        .container {
+            width: 80%;
+            margin: 80px auto 20px;
+            padding: 20px 0;
+        }
+        .member {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 105, 180, 0.1);
+            border: 2px solid #ff69b4;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .member img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .member-info {
+            flex: 1;
+            margin-left: 20px;
+        }
+        @media (max-width: 767px) {
+            .member {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px;
+            }
+            .member img {
+                margin-bottom: 10px;
+            }
+            .member-info {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header id="header">
+        <div>配信事務所 chipie</div>
+        <nav class="menu">
+            <a href="index.html">HOME</a>
+            <a href="Affiliation.html">所属ライバー</a>
+            <a href="blog.html">活動日記</a>
+            <a href="entry.html">お問い合わせ</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="member">
+            <img src="images/01.jpg" alt="メンバー1">
+            <div class="member-info">
+                <h2>メンバー1</h2>
+                <p>このメンバーの紹介文がここに入ります。</p>
+            </div>
+        </div>
+        <div class="member">
+            <img src="images/02.jpg" alt="メンバー2">
+            <div class="member-info">
+                <h2>メンバー2</h2>
+                <p>このメンバーの紹介文がここに入ります。</p>
+            </div>
+        </div>
+        <div class="member">
+            <img src="images/03.jpg" alt="メンバー3">
+            <div class="member-info">
+                <h2>メンバー3</h2>
+                <p>このメンバーの紹介文がここに入ります。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ヘッダーが隠れるタイミングを制御するJavaScript
+        let lastScrollTop = 0;
+        const header = document.getElementById('header');
+
+        window.addEventListener('scroll', function() {
+            let currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            if (currentScroll > lastScrollTop) {
+                // スクロールダウン時にヘッダーを隠す
+                header.style.top = "-80px"; // ヘッダーの高さ（または適切な値）分だけ隠す
+            } else {
+                // スクロールアップ時にヘッダーを表示
+                header.style.top = "0";
+            }
+            lastScrollTop = currentScroll <= 0 ? 0 : currentScroll; // 上にスクロールするとき、負の値を避ける
+        });
+    </script>
+</body>
+</html>
