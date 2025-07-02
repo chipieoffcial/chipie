@@ -53,8 +53,6 @@
       border-radius: 8px;
       border: 2px solid #ff69b4;
       margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
     }
 
     .post img {
@@ -62,7 +60,7 @@
       height: auto;
       object-fit: cover;
       border-radius: 5px;
-      margin-bottom: 10px;
+      margin: 10px 0;
     }
 
     .post .text {
@@ -120,14 +118,11 @@
     }
 
     @media screen and (max-width: 768px) {
-      .post {
-        flex-direction: column;
-      }
       .post img {
         display: none; /* スマホでは画像非表示 */
       }
       .navigation {
-        display: none; /* スマホはページ切り替えナビ非表示 */
+        display: none;
       }
     }
   </style>
@@ -162,7 +157,7 @@
     let currentIndex = 0;
     const isMobile = window.innerWidth <= 768;
 
-    async function fetchOGPImage(url) {
+    async function fetchAllImages(url) {
       try {
         const proxyURL = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
         const response = await fetch(proxyURL);
@@ -170,10 +165,24 @@
         const parser = new DOMParser();
         const html = parser.parseFromString(data.contents, "text/html");
         const ogImage = html.querySelector("meta[property='og:image']");
-        return ogImage ? ogImage.getAttribute("content") : "";
+        const bodyImages = html.querySelectorAll("img");
+        const images = [];
+
+        if (ogImage) {
+          images.push(ogImage.getAttribute("content"));
+        }
+
+        bodyImages.forEach(img => {
+          const src = img.getAttribute("src");
+          if (src && !images.includes(src)) {
+            images.push(src);
+          }
+        });
+
+        return images;
       } catch (error) {
-        console.error("OGP画像取得失敗:", error);
-        return "";
+        console.error("画像取得失敗:", error);
+        return [];
       }
     }
 
@@ -201,16 +210,16 @@
           const plainText = tempDiv.innerText.trim();
           const firstLines = plainText.split("\n").slice(0, 2).join("<br>");
 
-          let imageUrl = "";
+          let images = [];
           if (!isMobile) {
-            imageUrl = await fetchOGPImage(link);
+            images = await fetchAllImages(link);
           }
 
           totalPosts.push({
             title,
             pubDate,
             firstLines,
-            imageUrl,
+            images,
             link
           });
         }
@@ -243,10 +252,13 @@
         const postElement = document.createElement('div');
         postElement.className = 'post';
 
-        const imgTag = post.imageUrl ? `<img src="${post.imageUrl}" alt="記事画像">` : '';
+        let imagesHtml = '';
+        post.images.forEach(url => {
+          imagesHtml += `<img src="${url}" alt="記事画像">`;
+        });
 
         postElement.innerHTML = `
-          ${imgTag}
+          ${imagesHtml}
           <div class="text">
             <h3>${post.title}</h3>
             <p><strong>公開日:</strong> ${post.pubDate}</p>
