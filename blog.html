@@ -54,16 +54,15 @@
       border: 2px solid #ff69b4;
       margin-bottom: 20px;
       display: flex;
-      align-items: center;
-      gap: 15px;
+      flex-direction: column;
     }
 
     .post img {
-      width: 100px;
-      height: 100px;
+      width: 100%;
+      height: auto;
       object-fit: cover;
       border-radius: 5px;
-      flex-shrink: 0;
+      margin-bottom: 10px;
     }
 
     .post .text {
@@ -79,18 +78,29 @@
       color: #bbb;
     }
 
-    .read-more {
-      display: inline-block;
-      margin-top: 5px;
-      padding: 6px 12px;
-      background-color: #ff69b4;
-      color: white;
-      border-radius: 4px;
-      text-decoration: none;
-      font-size: 13px;
+    .navigation {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 40px;
     }
 
-    .read-more:hover {
+    .nav-button {
+      padding: 10px 20px;
+      background-color: #ff69b4;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    .nav-button:disabled {
+      background-color: #888;
+      cursor: not-allowed;
+    }
+
+    .nav-button:hover:not(:disabled) {
       background-color: #e55d92;
     }
 
@@ -112,11 +122,12 @@
     @media screen and (max-width: 768px) {
       .post {
         flex-direction: column;
-        align-items: flex-start;
       }
-
       .post img {
         display: none; /* スマホでは画像非表示 */
+      }
+      .navigation {
+        display: none; /* スマホはページ切り替えナビ非表示 */
       }
     }
   </style>
@@ -135,6 +146,10 @@
   <div class="container">
     <h2>最新の記事</h2>
     <div id="post-container"></div>
+    <div class="navigation">
+      <button class="nav-button" id="prev-btn">戻る</button>
+      <button class="nav-button" id="next-btn">次へ</button>
+    </div>
   </div>
 
   <footer>
@@ -144,6 +159,8 @@
   <script>
     const account = "chipie_official";
     let totalPosts = [];
+    let currentIndex = 0;
+    const isMobile = window.innerWidth <= 768;
 
     async function fetchOGPImage(url) {
       try {
@@ -182,14 +199,17 @@
           const tempDiv = document.createElement("div");
           tempDiv.innerHTML = rawDescription;
           const plainText = tempDiv.innerText.trim();
-          const firstLine = plainText.split("\n")[0];
+          const firstLines = plainText.split("\n").slice(0, 2).join("<br>");
 
-          const imageUrl = await fetchOGPImage(link);
+          let imageUrl = "";
+          if (!isMobile) {
+            imageUrl = await fetchOGPImage(link);
+          }
 
           totalPosts.push({
             title,
             pubDate,
-            firstLine,
+            firstLines,
             imageUrl,
             link
           });
@@ -206,27 +226,55 @@
       const postContainer = document.getElementById("post-container");
       postContainer.innerHTML = '';
 
-      totalPosts.forEach(post => {
+      if (isMobile) {
+        totalPosts.forEach(post => {
+          const postElement = document.createElement('div');
+          postElement.className = 'post';
+          postElement.innerHTML = `
+            <div class="text">
+              <h3>${post.title}</h3>
+              <p><strong>公開日:</strong> ${post.pubDate}</p>
+            </div>
+          `;
+          postContainer.appendChild(postElement);
+        });
+      } else {
+        const post = totalPosts[currentIndex];
         const postElement = document.createElement('div');
         postElement.className = 'post';
 
-        const imgTag = post.imageUrl
-          ? `<img src="${post.imageUrl}" alt="記事画像">`
-          : '';
+        const imgTag = post.imageUrl ? `<img src="${post.imageUrl}" alt="記事画像">` : '';
 
         postElement.innerHTML = `
           ${imgTag}
           <div class="text">
             <h3>${post.title}</h3>
             <p><strong>公開日:</strong> ${post.pubDate}</p>
-            <p>${post.firstLine}</p>
+            <p>${post.firstLines}</p>
             <a href="${post.link}" target="_blank" class="read-more">記事を見る</a>
           </div>
         `;
 
         postContainer.appendChild(postElement);
-      });
+
+        document.getElementById("prev-btn").disabled = currentIndex === 0;
+        document.getElementById("next-btn").disabled = currentIndex === totalPosts.length - 1;
+      }
     }
+
+    document.getElementById("prev-btn").addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        displayPosts();
+      }
+    });
+
+    document.getElementById("next-btn").addEventListener("click", () => {
+      if (currentIndex < totalPosts.length - 1) {
+        currentIndex++;
+        displayPosts();
+      }
+    });
 
     window.onload = () => {
       loadRSS(account);
