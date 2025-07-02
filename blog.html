@@ -54,8 +54,20 @@
       border: 2px solid #ff69b4;
       margin-bottom: 20px;
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .post img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+
+    .post .text {
+      flex: 1;
     }
 
     .post h3 {
@@ -68,14 +80,14 @@
     }
 
     .read-more {
-      align-self: flex-end;
-      padding: 8px 15px;
+      display: inline-block;
+      margin-top: 5px;
+      padding: 6px 12px;
       background-color: #ff69b4;
       color: white;
-      border: none;
-      border-radius: 5px;
+      border-radius: 4px;
       text-decoration: none;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .read-more:hover {
@@ -95,6 +107,18 @@
 
     footer a:hover {
       text-decoration: underline;
+    }
+
+    @media screen and (max-width: 768px) {
+      .post {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .post img {
+        width: 100%;
+        height: auto;
+      }
     }
   </style>
 </head>
@@ -122,6 +146,21 @@
     const account = "chipie_official";
     let totalPosts = [];
 
+    async function fetchOGPImage(url) {
+      try {
+        const proxyURL = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyURL);
+        const data = await response.json();
+        const parser = new DOMParser();
+        const html = parser.parseFromString(data.contents, "text/html");
+        const ogImage = html.querySelector("meta[property='og:image']");
+        return ogImage ? ogImage.getAttribute("content") : "";
+      } catch (error) {
+        console.error("OGP画像取得失敗:", error);
+        return "";
+      }
+    }
+
     async function loadRSS(username) {
       const rssURL = `https://note.com/${username}/rss`;
       const proxyURL = `https://api.allorigins.win/get?url=${encodeURIComponent(rssURL)}`;
@@ -141,16 +180,19 @@
           const rawDescription = item.querySelector("description").textContent;
           const link = item.querySelector("link").textContent;
 
-          // HTMLタグを除去して1行目を取得
+          // HTMLタグを除去して1行目だけ抽出
           const tempDiv = document.createElement("div");
           tempDiv.innerHTML = rawDescription;
           const plainText = tempDiv.innerText.trim();
           const firstLine = plainText.split("\n")[0];
 
+          const imageUrl = await fetchOGPImage(link);
+
           totalPosts.push({
             title,
             pubDate,
             firstLine,
+            imageUrl,
             link
           });
         }
@@ -170,11 +212,18 @@
         const postElement = document.createElement('div');
         postElement.className = 'post';
 
+        const imgTag = post.imageUrl
+          ? `<img src="${post.imageUrl}" alt="記事画像">`
+          : '';
+
         postElement.innerHTML = `
-          <h3>${post.title}</h3>
-          <p><strong>公開日:</strong> ${post.pubDate}</p>
-          <p>${post.firstLine}</p>
-          <a href="${post.link}" target="_blank" class="read-more">記事を見る</a>
+          ${imgTag}
+          <div class="text">
+            <h3>${post.title}</h3>
+            <p><strong>公開日:</strong> ${post.pubDate}</p>
+            <p>${post.firstLine}</p>
+            <a href="${post.link}" target="_blank" class="read-more">記事を見る</a>
+          </div>
         `;
 
         postContainer.appendChild(postElement);
