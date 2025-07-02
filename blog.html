@@ -60,6 +60,11 @@
       display: block;
       margin: 10px 0;
     }
+    .post-header-image {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
     .navigation {
       display: flex;
       justify-content: center;
@@ -127,6 +132,21 @@
     let currentIndex = 0;
     let totalPosts = [];
 
+    async function fetchOGPImage(url) {
+      try {
+        const proxyURL = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyURL);
+        const data = await response.json();
+        const parser = new DOMParser();
+        const html = parser.parseFromString(data.contents, "text/html");
+        const ogImage = html.querySelector("meta[property='og:image']");
+        return ogImage ? ogImage.getAttribute("content") : "";
+      } catch (error) {
+        console.error("OGP画像取得失敗:", error);
+        return "";
+      }
+    }
+
     async function loadRSS(username) {
       const rssURL = `https://note.com/${username}/rss`;
       const proxyURL = `https://api.allorigins.win/get?url=${encodeURIComponent(rssURL)}`;
@@ -146,10 +166,13 @@
           const rawDescription = item.querySelector("description").textContent;
           const link = item.querySelector("link").textContent;
 
+          const imageUrl = await fetchOGPImage(link);
+
           totalPosts.push({
             title,
             pubDate,
             rawDescription,
+            imageUrl,
             link
           });
         }
@@ -171,10 +194,13 @@
       const postElement = document.createElement('div');
       postElement.className = 'post';
 
+      const headerImageHTML = post.imageUrl ? `<img src="${post.imageUrl}" alt="" class="post-header-image">` : "";
+
       postElement.innerHTML = `
         <a href="${post.link}" target="_blank" style="color:inherit; text-decoration:none;">
           <h3>${post.title}</h3>
           <p><strong>公開日:</strong> ${post.pubDate}</p>
+          ${headerImageHTML}
           <div class="post-content">${post.rawDescription}</div>
         </a>
       `;
