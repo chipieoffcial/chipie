@@ -116,8 +116,7 @@
       }
 
       .post img {
-        width: 100%;
-        height: auto;
+        display: none; /* スマホでは画像非表示 */
       }
     }
   </style>
@@ -180,7 +179,6 @@
           const rawDescription = item.querySelector("description").textContent;
           const link = item.querySelector("link").textContent;
 
-          // HTMLタグを除去して1行目だけ抽出
           const tempDiv = document.createElement("div");
           tempDiv.innerHTML = rawDescription;
           const plainText = tempDiv.innerText.trim();
