@@ -47,24 +47,18 @@
       border: 2px solid #ff69b4;
       margin-bottom: 20px;
     }
-    .post-images {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-    .post-images img {
-      width: 48%;
-      height: auto;
-      object-fit: cover;
-      border-radius: 8px;
-      background-color: #444;
-    }
     .post h3 {
       margin: 0 0 10px 0;
     }
     .post p {
       color: #bbb;
+    }
+    .post-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      display: block;
+      margin: 10px 0;
     }
     .navigation {
       display: flex;
@@ -87,11 +81,6 @@
     }
     .nav-button:hover:not(:disabled) {
       background-color: #e55d92;
-    }
-    @media screen and (max-width: 768px) {
-      .post-images img {
-        width: 100%;
-      }
     }
     footer {
       text-align: center;
@@ -138,28 +127,6 @@
     let currentIndex = 0;
     let totalPosts = [];
 
-    async function fetchAllImages(url) {
-      try {
-        const proxyURL = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyURL);
-        const data = await response.json();
-        const parser = new DOMParser();
-        const html = parser.parseFromString(data.contents, "text/html");
-        const imgTags = html.querySelectorAll("img");
-        const imageUrls = [];
-        imgTags.forEach(img => {
-          const src = img.getAttribute("src");
-          if (src && !imageUrls.includes(src)) {
-            imageUrls.push(src);
-          }
-        });
-        return imageUrls;
-      } catch (error) {
-        console.error("画像取得失敗:", error);
-        return [];
-      }
-    }
-
     async function loadRSS(username) {
       const rssURL = `https://note.com/${username}/rss`;
       const proxyURL = `https://api.allorigins.win/get?url=${encodeURIComponent(rssURL)}`;
@@ -177,22 +144,15 @@
           const title = item.querySelector("title").textContent;
           const pubDate = new Date(item.querySelector("pubDate").textContent).toLocaleDateString();
           const rawDescription = item.querySelector("description").textContent;
-          const description = rawDescription.replace(/<[^>]+>/g, '');
           const link = item.querySelector("link").textContent;
 
           totalPosts.push({
             title,
             pubDate,
-            description,
-            imageUrls: [],
+            rawDescription,
             link
           });
         }
-
-        await Promise.all(totalPosts.map(async (post) => {
-          const images = await fetchAllImages(post.link);
-          post.imageUrls = images;
-        }));
 
         displayPost();
 
@@ -211,19 +171,11 @@
       const postElement = document.createElement('div');
       postElement.className = 'post';
 
-      let imagesHTML = "";
-      if (post.imageUrls.length > 0) {
-        imagesHTML = `<div class="post-images">` +
-          post.imageUrls.map(url => `<img src="${url}" alt="image">`).join('') +
-          `</div>`;
-      }
-
       postElement.innerHTML = `
         <a href="${post.link}" target="_blank" style="color:inherit; text-decoration:none;">
-          ${imagesHTML}
           <h3>${post.title}</h3>
           <p><strong>公開日:</strong> ${post.pubDate}</p>
-          <p>${post.description}</p>
+          <div class="post-content">${post.rawDescription}</div>
         </a>
       `;
 
@@ -265,4 +217,3 @@
   </script>
 </body>
 </html>
-
